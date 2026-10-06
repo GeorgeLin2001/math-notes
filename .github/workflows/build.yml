@@ -12,19 +12,56 @@ permissions:
 
 jobs:
   build:
-    runs-on: macos-latest
+    # 用 macos-14 而非 macos-latest：latest 为 arm64，容量紧张时排队很久
+    runs-on: macos-14
+
+    # 关键修复：GitHub Actions 的步骤脚本是非登录 shell，
+    # /Library/TeX/texbin 不会自动进入 PATH，必须显式加上，否则 latexmk 报 exit 127。
+    env:
+      PATH: /Library/TeX/texbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Preflight - verify LaTeX toolchain
+        run: |
+          set -o pipefail
+          echo "== 查找 LateX 工具 =="
+          for tool in latexmk xelatex kpsewhich; do
+            if command -v "$tool" >/dev/null 2>&1; then
+              echo "  ✓ $tool → $(command -v "$tool")"
+            else
+              echo "  ✗ $tool 未找到"
+            fi
+          done
+
+          if ! command -v latexmk >/dev/null 2>&1; then
+            echo ""
+            echo "runner 上未预装 MacTeX，降级安装 TinyTeX …"
+            curl -sL "https://yihui.org/tinytex/install-bin-unix.sh" | sh
+            echo "$HOME/.TinyTeX/bin/universal-darwin" >> "$GITHUB_PATH"
+            export PATH="$HOME/.TinyTeX/bin/universal-darwin:$PATH"
+            # 按 note.tex 实际用到的宏包逐一安装（TinyTeX 是精简版，不预装这些）
+            tlmgr install \
+              ctex xecjk fandol zhnumber \
+              amsmath amssymb amsthm mathrsfs mathtools \
+              geometry \
+              tikz-cd pgf \
+              hyperref \
+              extarrows \
+              bbm \
+              esint
+          fi
+
+          echo ""
+          echo "== 版本信息 =="
+          latexmk --version | head -2
+          xelatex --version | head -1
+
       - name: Toolchain info
         run: |
-          echo "== xelatex =="
-          xelatex --version | head -2 || true
-          echo "== latexmk =="
-          latexmk --version | head -2 || true
-          echo "== TeX Live 年份 =="
+          echo "== TeX Live =="
           kpsewhich --var-value=SELFAUTOPARENT || true
           echo "== 宏包探测 =="
           for p in ctexart.cls esint.sty extarrows.sty bbm.sty tikz-cd.sty mathtools.sty; do
