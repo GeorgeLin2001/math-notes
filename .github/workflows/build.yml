@@ -18,17 +18,58 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # GitHub 的 macOS runner 预装完整 MacTeX，ctex / esint / extarrows / bbm / tikz-cd 全部齐备，
-      # 无需 apt 装包，也无需等 Docker 镜像。
-      - name: Verify toolchain
+      - name: Toolchain info
         run: |
-          xelatex --version | head -1
-          latexmk --version | head -2
+          echo "== xelatex =="
+          xelatex --version | head -2 || true
+          echo "== latexmk =="
+          latexmk --version | head -2 || true
+          echo "== TeX Live 年份 =="
+          kpsewhich --var-value=SELFAUTOPARENT || true
+          echo "== 宏包探测 =="
+          for p in ctexart.cls esint.sty extarrows.sty bbm.sty tikz-cd.sty mathtools.sty; do
+            printf '  %-16s ' "$p"
+            kpsewhich "$p" || echo "!!! 缺失 !!!"
+          done
 
       - name: Build PDF
         run: |
-          latexmk -xelatex -interaction=nonstopmode -halt-on-error \
-            -outdir=build -jobname=note note.tex
+          set -o pipefail
+          mkdir -p build
+          # -f: 出错也继续，把全部错误写进日志，便于一次性看到所有问题
+          latexmk -xelatex -f -interaction=nonstopmode -file-line-error \
+            -outdir=build -jobname=note note.tex 2>&1 | tee build/compile-output.txt
+          echo "latexmk 退出码: ${PIPESTATUS[0]}"
+
+          if [ -f build/note.pdf ]; then
+            echo "✓ 已生成 build/note.pdf"
+            exit 0
+          fi
+
+          echo "::error title=LaTeX 编译失败::未能生成 note.pdf，错误摘要见下方"
+          echo ""
+          echo "======================= 错误摘要 ======================="
+          if [ -f build/note.log ]; then
+            grep -nE -A3 "^!|LaTeX Error|Emergency stop|not found|Fatal error" build/note.log \
+              | head -80 || echo "（note.log 中未匹配到错误行，见下方日志尾部）"
+            echo "------------------- note.log 最后 40 行 -------------------"
+            tail -40 build/note.log
+          else
+            echo "!! build/note.log 不存在 —— 编译在很早期就中断了"
+          fi
+          echo "========================================================"
+          exit 1
+
+      - name: Upload compile logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: latex-compile-logs
+          path: |
+            build/note.log
+            build/compile-output.txt
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Move PDF to repository root
         run: cp build/note.pdf note.pdf
