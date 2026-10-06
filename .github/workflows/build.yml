@@ -1,0 +1,47 @@
+name: Build PDF
+
+# 只监听源码变化：改了 note.tex 才触发，避免 PDF 自身的提交造成循环
+"on":
+  push:
+    paths:
+      - 'note.tex'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # GitHub 的 macOS runner 预装完整 MacTeX，ctex / esint / extarrows / bbm / tikz-cd 全部齐备，
+      # 无需 apt 装包，也无需等 Docker 镜像。
+      - name: Verify toolchain
+        run: |
+          xelatex --version | head -1
+          latexmk --version | head -2
+
+      - name: Build PDF
+        run: |
+          latexmk -xelatex -interaction=nonstopmode -halt-on-error \
+            -outdir=build -jobname=note note.tex
+
+      - name: Move PDF to repository root
+        run: cp build/note.pdf note.pdf
+
+      # 幂等：只有内容真的变了才提交，重复运行不会产生空提交，也不会造成循环
+      - name: Commit PDF if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add note.pdf
+          if git diff --staged --quiet; then
+            echo "PDF 无变化，跳过提交"
+          else
+            git commit -m "chore: rebuild note.pdf [skip ci]"
+            git push
+          fi
