@@ -1,0 +1,302 @@
+\documentclass[11pt]{ctexart}[UTF8]
+\usepackage[UTF8]{ctex}
+\usepackage{amsmath, amssymb, amsthm, mathrsfs, mathtools}
+\usepackage{geometry}
+\usepackage{tikz-cd}
+\usepackage{hyperref}
+\usepackage{extarrows}
+\usepackage{bbm}
+\usepackage{esint}
+\usepackage{tikz}
+\usetikzlibrary{patterns}
+\geometry{a4paper, margin=2cm}
+
+\begin{document}
+\title{非线性分析及其应用}
+\author{分析数学}
+\date{\today}
+\maketitle
+\tableofcontents
+
+\newtheorem{theorem}{定理}[section]
+\newtheorem{definition}{定义}[section]
+\newtheorem{lemma}{引理}[section]
+\newtheorem{corollary}{推论}[section]
+\newtheorem{proposition}{命题}[section]
+\newtheorem{example}{例}[section]
+\newtheorem{remark}{注}[section]
+\newtheorem{property}{性质}[section]
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\Frechet}{\textnormal{Fr\'echet}}
+\newcommand{\Gateaux}{\textnormal{G\^ateaux}}
+\makeatletter
+\newcommand{\averageint}{\Xint-}
+\def\Xint#1{%
+  \mathchoice
+  {\XXint\displaystyle\textstyle{#1}}%
+  {\XXint\textstyle\scriptstyle{#1}}%
+  {\XXint\scriptstyle\scriptscriptstyle{#1}}%
+  {\XXint\scriptscriptstyle\scriptscriptstyle{#1}}%
+  \!\int
+}
+\def\XXint#1#2#3{%
+  \setbox0=\hbox{$#1{#2#3}{\int}$}%
+  \vcenter{\hbox{$#2#3$}}\kern-.52\wd0
+}
+\makeatother
+
+\newpage
+\section{Differential Calculus}
+\subsection{\Frechet\ and\ \Gateaux\  Derivatives}
+设 $X,Y $ 为 Banach 空间, 我们先给出 \Frechet 导数的定义.
+\begin{definition}[\Frechet 导数]
+  我们称 $f$ 在 $x_{0}\in X$ 处是 \Frechet 可导的, 如果存在 $A \in \mathscr{L}(X,Y)$, 使得下式成立:
+  \begin{equation}
+    f(x) = f(x_{0}) + A(x-x_{0}) + o(\|x-x_{0}\|), \quad x \to x_{0}.
+  \end{equation}
+\end{definition}
+\begin{remark}
+  这里 $\mathscr{L}(X,Y)$ 表示从 $X$ 到 $Y$ 的有界线性算子空间. 如果上述式子中的 $A$ 存在, 那么其是唯一的, 我们称其为 $f$ 在 $x_{0}$ 处的 \Frechet 导数,
+  记作 $A=f'(x_{0})$ 或者 $A = \mathrm{d}f(x_{0})$.
+\end{remark}
+给出几个具体的例子:
+\begin{example}
+  设 $L \in \mathscr{L}(X,Y)$, 则 $L$ 在任意点 $x_{0} \in X$ 处都是 \Frechet 可导的, 且 $L'(x_{0}) = L$.
+\end{example}
+\begin{example}
+  设 $X = X_{1} \times X_{2}$, $X_{1}, X_{2}$ 为 Banach 空间, $f$ 为 $X$ 到 $Y$ 的有界双线性算子, 则 $f$ 在任意点 $x_{0} = (x_{1}^{0}, x_{2}^{0}) \in X$ 处都是 \Frechet 可导的, 且
+  \begin{equation*}
+    f'(x_{0})(h_{1}, h_{2}) = f(x_{1}^{0}, h_{2}) + f(h_{1}, x_{2}^{0}), \quad (h_{1}, h_{2}) \in X.
+  \end{equation*}
+\end{example}
+\begin{proof}
+  记 $M = \|f\| < \infty$，在 $X$ 上取范数
+  $\|(u,v)\|_{X} = \max\{\|u\|_{X_{1}}, \|v\|_{X_{2}}\}$。对 $h = (h_{1}, h_{2}) \in X$ 令
+  \begin{equation*}
+    A(h) = f(x_{1}^{0}, h_{2}) + f(h_{1}, x_{2}^{0}).
+  \end{equation*}
+  由 $f$ 的双线性性，$A$ 关于 $h$ 线性，且
+  \begin{equation*}
+    \|A(h)\| \le M\|x_{2}^{0}\|\|h_{1}\| + M\|x_{1}^{0}\|\|h_{2}\|
+    \le 2M\|x_{0}\|_{X}\|h\|_{X},
+  \end{equation*}
+  故 $A \in \mathscr{L}(X, Y)$。另一方面，由双线性性展开
+  \begin{equation*}
+    f(x_{0} + h)
+    = f(x_{1}^{0}, x_{2}^{0}) + f(h_{1}, x_{2}^{0}) + f(x_{1}^{0}, h_{2}) + f(h_{1}, h_{2}),
+  \end{equation*}
+  于是余项恰为 $f(h_{1}, h_{2})$，且
+  \begin{equation*}
+    \|f(x_{0} + h) - f(x_{0}) - A(h)\| = \|f(h_{1}, h_{2})\|
+    \le M\|h_{1}\|\|h_{2}\| \le M\|h\|_{X}^{2} = o(\|h\|_{X}) \quad (h \to 0).
+  \end{equation*}
+  按 \Frechet 导数的定义及唯一性得
+  \begin{equation*}
+    f'(x_{0})(h_{1}, h_{2}) = f(x_{1}^{0}, h_{2}) + f(h_{1}, x_{2}^{0}).
+  \end{equation*}
+\end{proof}
+\begin{example}
+  设 $X$ 为 Hilbert 空间, $f: X \to \mathbb{R}$ 定义为
+  \begin{equation*}
+    f(x) = \Vert x\Vert^{2}, \quad x \in X.
+  \end{equation*}
+  那么 $f$ 在任意点 $x_{0} \in X$ 处都是 \Frechet 可导的, 且
+  \begin{equation*}
+    f'(x_{0})h = 2\langle x_{0}, h\rangle, \quad h \in X.
+  \end{equation*}
+\end{example}
+\begin{example}
+  设 $X = L^{p}(\Omega)$, $\Omega \subset \mathbb{R}^n$ 为有界开集, $1 \le p < \infty$, $f: X \to \mathbb{R}$ 定义为
+  \begin{equation*}
+    f(u) = \int_{\Omega} |u(x)|^{p} \,\mathrm{d}x, \quad u \in X.
+  \end{equation*}
+  那么 $f$ 在任意点 $u_{0} \in X$ 处都是 \Frechet 可导的, 且
+  \begin{equation*}
+    f'(u_{0})h = p\int_{\Omega} |u_{0}(x)|^{p-1}  h(x) \,\mathrm{d}x, \quad h \in X.
+  \end{equation*}
+\end{example}
+接下来给出\Gateaux 导数的定义。
+\begin{definition}
+  设 $X, Y$ 为 Banach 空间, $f: X \to Y$ 为映射, $x_{0} \in X$。如果存在 $A \in \mathscr{L}(X,Y)$, 使得
+  \begin{equation}
+    \lim_{t \to 0} \frac{f(x_{0} + th) - f(x_{0})}{t} = A(h), \quad h \in X,
+  \end{equation}
+  则称 $f$ 在 $x_{0}$ 处是 \Gateaux 可导的, $A$ 称为 $f$ 在 $x_{0}$ 处的 \Gateaux 导数, 记作 $A = \mathrm{d}_{G}f(x_{0})$。
+\end{definition}
+\begin{remark}
+  有关\Frechet 导数与 \Gateaux 导数的一些基本的性质, 比如线性性质、唯一性等, 这里不再赘述。
+\end{remark}
+我们介绍一下什么叫一个泛函属于 $C^{1}$。
+\begin{definition}
+  设 $X, Y$ 为 Banach 空间, $F: U\subset X \to Y$ 为泛函。如果
+  \begin{enumerate}
+    \item $F$ 在 $U$ 的每一点处都是 \Frechet 可导的;
+    \item 导数映射 $x \mapsto F'(x)$ 是连续的。
+  \end{enumerate}
+  则称 $F$ 属于 $C^{1}$ , 记作 $F \in C^{1}(U)$。
+\end{definition}
+在给出\Gateaux 导数和 \Frechet 导数之间的关系之前, 我们先给出一个拟微分中值定理。
+\begin{theorem}\label{mean-value}
+  设 $F: U \to Y$ 在 $U$ 中每点 \Gateaux 可导, 给定 $u,v \in U, [u,v] \subset U$, 则有:
+  \begin{equation}
+    \Vert F(v) - F(u) \Vert \leq \sup\{ \Vert \mathrm{d}_{G}F(\omega)\  |\ \omega \in [u,v] \} \Vert (v-u) \Vert.
+  \end{equation}
+  这里 $[u,v]$ 表示连接 $u$ 和 $v$ 的线段, 即 $[u,v] = \{ (1-t)u + tv \mid t \in [0,1] \}$。
+\end{theorem}
+\begin{proof}
+  不失一般性, 不妨假设 $F(u) \neq F(v)$。那么由 Hahn-Banach 定理, 存在 $\psi \in Y^{*} = \mathscr{L}(Y,\mathbb{R})$, 使得
+  \begin{equation*}
+    \langle \psi, F(v) - F(u) \rangle = \Vert F(v) - F(u) \Vert.
+  \end{equation*}
+  令 $\gamma(t) = tu+(1-t)v$, $t \in [0,1]$, $h(t) = \langle \psi, F(\gamma(t)) \rangle$. 那么
+  $\gamma$ 定义了一个从 $[0,1]$ 到 $Y$ 的连续映射, 而 $h$ 定义了一个从 $[0,1]$ 到 $\mathbb{R}$ 的连续映射。接下来计算
+  \begin{equation*}
+    \begin{aligned}
+      \frac{h(t+\tau)-h(t)}{\tau} &= \langle \psi, \frac{F(\gamma(t+\tau)) - F(\gamma(t))}{\tau} \rangle\\
+      &= \langle \psi, \frac{F(\gamma(t)+\tau(u-v))-F(\gamma(t))}{\tau} \rangle\\
+      &\xlongrightarrow{\tau \to 0} \langle \psi, \mathrm{d}_{G}F(\gamma(t))(u-v) \rangle.
+    \end{aligned}
+  \end{equation*}
+  于是我们得到 $h'(t) = \langle \psi, \mathrm{d}_{G}F(\gamma(t))(u-v) \rangle$, $t \in [0,1]$。 故 $h$ 可导,从而
+  \begin{equation*}
+    \begin{aligned}
+      \Vert F(u)-F(v) \Vert &= |h'(\theta)| = |\langle \psi, \mathrm{d}_{G}F(\gamma(\theta))(u-v) \rangle|\\
+      &\leq \Vert \psi \Vert \Vert \mathrm{d}_{G}F(\gamma(\theta)) \Vert \Vert u-v \Vert\\
+      &\leq \sup\{ \Vert \mathrm{d}_{G}F(\omega) \Vert \mid \omega \in [u,v] \} \Vert u-v \Vert.
+    \end{aligned}
+  \end{equation*}
+\end{proof}
+那么对于 \Gateaux 可导数和 \Frechet 可导导数之间的关系, 我们有如下结论:
+\begin{theorem}
+  设 $X, Y$ 为 Banach 空间, $F: U \subset X \to Y$ 为泛函。如果 $F$ 在 $U$ 的每一点处都是 \Gateaux 可导的, 且 $\mathrm{d}_{G}F : U \to \mathscr{L}(X,Y)$
+  在 $u^{*}\in U$ 连续, 则 $F$ 在 $u^{*}$ 处是 \Frechet 可导的, 且
+  \begin{equation*}
+    \mathrm{d}F(u^{*}) = \mathrm{d}_{G}F(u^{*}).
+  \end{equation*}
+\end{theorem}
+\begin{proof}
+  令 $R(h) = F(u^{*}+h) - F(u^{*}) - \mathrm{d}_{G}F(u^{*})h$. 在定理 \ref{mean-value} 中取 $[u,v]=[0,h]$, 则有:
+  \begin{equation*}
+    \Vert R(h) \Vert \leq \sup\limits_{t \in [0,1]} \Vert \mathrm{d}_{G} R(th) \Vert \Vert h \Vert.
+  \end{equation*}
+  而
+  \begin{equation}\label{1.9*}
+    \mathrm{d}_{G} R(th) = \mathrm{d}_{G} F(u^{*}+th) - \mathrm{d}_{G} F(u^{*}).
+  \end{equation}
+  故有
+  \begin{equation*}
+    \sup\limits_{t \in [0,1]} \Vert \mathrm{d}_{G} R(th) \Vert = \sup\limits_{t \in [0,1]} \Vert \mathrm{d}_{G} F(u^{*}+th) - \mathrm{d}_{G} F(u^{*}) \Vert \to 0 \quad \text{as}\quad  h \to 0
+  \end{equation*}
+  这说明 $R(h) = o(\Vert h \Vert)$, 从而 $F$ 在 $u^{*}$ 处是 \Frechet 可导的.
+\end{proof}
+\begin{remark}
+  关于 (\ref{1.9*} ) 式
+  \begin{equation*}
+    R(th) = \underbrace{F(u^{*}+th)}_{\mathrm{d}_{G}F(u^{*}+th)} - \underbrace{F(u^{*})}_{\text{常值映射导数为}0} - \underbrace{\mathrm{d}_{G}F(u^{*}) (th)}_{\text{线性映射导数为}\mathrm{d}_{G}F(u^{*})}.
+  \end{equation*}
+\end{remark}
+进一步由于 $F \in C^{1}(U,Y)$, $F \circ \gamma : [0,1] \to Y$ 是连续可导的, 从而 $(F \circ \gamma)' = F'(tu+(1-t)v)(u-v)$.
+\begin{equation*}
+  F(v)-F(u) = (u-v)\int_{0}^{1} F'(tu+(1-t)v) \, \mathrm{d}t.
+\end{equation*}
+\subsection{Continuity and differentiability of Nemitski operators}
+我们先给出 Nemitski 算子的定义。
+\begin{definition}[Nemitski operator]
+  对$\Omega \subset \mathbb{R}^n$ $f: \Omega \times \mathbb{R} \to \mathbb{R}$ 与 $f$ 相伴的 Nemitski 算子, 是指定义在 $\mathcal{M}(\Omega)$ 上、由
+  \begin{equation*}
+    u(x) \mapsto f\bigl(x, u(x)\bigr)
+  \end{equation*}
+  给出的映射。以下用同一符号 $f$ 同时表示 $f$ 及其 Nemitski 算子, 同时要求 $f$ 是 Carathéodory 函数, 即
+  \begin{enumerate}
+    \item $s \mapsto f(x,s)$ 连续 $\mathrm{a.e}, x\in \Omega$,
+    \item $x \mapsto f(x,s) \in \mathcal{M}(\Omega),\ \forall s \in \mathbb{R}$.
+  \end{enumerate}
+  这里 $\mathcal{M}(\Omega)$ 表示 $\Omega$ 上的可测函数空间。 上述条件我们称为条件 (C).
+\end{definition}
+我们给定 $f$ 的一个增长性条件:
+\begin{equation}\label{2.2}
+  \text{设}\  p,q \geq 1,\ |f(x,s)| \leq a + b|s|^{\alpha}, \alpha = \frac{p}{q}, a,b \geq 0.
+\end{equation}
+有了这个增长性条件我们就可以讨论 Nemitski 算子的连续性。
+\begin{theorem}\label{thm:continuity}
+  设 $\Omega \subset \mathbb{R}^{n}$ 为有界区域, $f$ 满足条件 (C) 和(\ref{2.2}), 则
+  \begin{equation*}
+    \begin{aligned}
+      f : L^{p}(\Omega) &\to L^{q}(\Omega)\\
+      u &\mapsto f(x, u(x))\ \text{记为} f(u)
+    \end{aligned}
+  \end{equation*}
+  是连续的.
+\end{theorem}
+\begin{remark}
+  这里的连续是指: 如果 $u_{n} \to u$ 在 $L^{p}(\Omega)$ 中, 则 $f(u_{n}) \to f(u)$ 在 $L^{q}(\Omega)$ 中. 即
+  \begin{equation*}
+    \Vert u_{n} - u \Vert_{L^{p}(\Omega)} \to 0 \quad \Longrightarrow \quad \Vert f(u_{n}) - f(u) \Vert_{L^{q}(\Omega)} \to 0.
+  \end{equation*}
+\end{remark}
+在证明这个定理之前我们需要如下引理:
+\begin{lemma}
+  如果 $u_{n} \to u$ 在 $L^{p}(\Omega)$ 中, 且 $\mu(\Omega) < \infty$, 则存在一个子列 $\{u_{n_{k}}\}$ 和 $h \in L^{p}(\Omega)$,
+  使得 $u_{n_{k}} \to h$ 几乎处处成立, 且 $|u_{n_{k}}| \leq h$ 几乎处处成立.
+\end{lemma}
+接下来我们证明定理\ref{thm:continuity}。
+\begin{proof}
+  存在子列 $u_{n_{k}}$ 使得:
+  \begin{equation*}
+    u_{n_{k}} \to u \quad \text{a.e. in } \Omega, \quad f(u_{n_{k}}) to f(u) \text{a.e. in } \Omega.
+  \end{equation*}
+  由 (\ref{2.2}) 可知
+  \begin{equation*}
+    |f(u_{n_{k}})| \leq a + b|u_{n_{k}}|^{\alpha} \leq a + b |h|^{\alpha}\in L^{q}(\Omega) \quad \text{a.e. in } \Omega.
+  \end{equation*}
+  从而 $f(u_{n_{k}}) \in L^{q}(\Omega)$ 且一致有界. 由控制收敛定理可得 $f(u_{n_{k}}) \to f(u)$ 在 $L^{q}(\Omega)$ 中. 这就说明了连续性.
+\end{proof}
+接下来讨论可微性.\\
+设 $p>2$, $f$ 有偏导数 $f_{s} = \frac{\partial f}{\partial s}$ 且满足条件 (C) 和 如下增长性条件:
+\begin{equation}\label{2.3}
+  \text{设}\  p,q \geq 1,\ |f_{s}(x,s)| \leq a + b|s|^{p-2}, a,b \geq 0.
+\end{equation}
+对于可微性我们有如下定理:
+\begin{theorem}\label{thm:differentiability}
+  设 $\Omega \subset \mathbb{R}^{n}$ 为有界区域, $p > 2$, $f$ 满足条件 (C) 假设 $f(x,0)$ 为有界函数, 且 $f_{s}$ 满足 条件(C) 和 (\ref{2.3}), 则
+  \begin{equation*}
+    f : L^{p}(\Omega) \to L^{p'}(\Omega) \text{是 \Frechet 可导的, 且} \mathrm{d}f(u) : v \mapsto f_{s}(u)v.
+  \end{equation*}
+
+\end{theorem}
+\begin{proof}
+  对 $u,v_{n} \in L^{p}(\Omega)$, 我们记
+  \begin{equation*}
+    \begin{aligned}
+      \omega(u,v) &= \Vert f(u+v) - f(u) -f_{s}(u)v \Vert_{L^{p'}(\Omega)}\\
+      &= \int_{\Omega} |f(x,u(x)+v(x)) - f(x,u(x)) -f_{s}(x,u(x))v(x)|^{p'} \, \mathrm{d}x.
+    \end{aligned}
+  \end{equation*}
+  而
+  \begin{equation*}
+    f(x,u+v) - f(x,u) -f_{s}(x,u)v = v(x) \underbrace{\int_{0}^{1} (f_{s}(x,u(x)+\xi v(x)) - f_{s}(x,u(x))) \, \mathrm{d\xi}}_{w(x)} \quad \mathrm{a.e. in } \Omega.
+  \end{equation*}
+  则
+  \begin{equation*}
+    \begin{aligned}
+      w(u,v) &= \left(\int_{\Omega} |v(x) w(x)|^{p'} \, \mathrm{d}x \right)^{\frac{1}{p'}}\\
+      &= \left(\int_{\Omega} |v(x)|^{\frac{p}{p-1}} |w(x)|^{\frac{p}{p-1}} \, \mathrm{d}x\right)^{\frac{p-1}{p}}\\
+      &\leq \left( \left( \int_{\Omega} |v|^{p}\mathrm{d}x \right)^{\frac{1}{p-1}} \left( \int_{\Omega} |w|^{\frac{p}{p-2}}\mathrm{d}x \right)^{\frac{p-2}{p-1}}  \right)^{\frac{p-1}{p}}\\
+      &= \left( \int_{\Omega} |v|^{p}\mathrm{d}x \right)^{\frac{1}{p}} \left( \int_{\Omega} |w|^{\frac{p}{p-2}}\mathrm{d}x \right)^{\frac{p-2}{p}}\\
+      &= \Vert v \Vert_{L^{p}(\Omega)} \Vert w \Vert_{L^{r}}(\Omega). \quad \quad(r = \frac{p}{p-2})
+    \end{aligned}
+  \end{equation*}
+  进一步的对于 $\Vert w \Vert_{L^{r}(\Omega)}$ 我们有
+  \begin{equation*}
+    \begin{aligned}
+      \Vert w \Vert_{L^{r}(\Omega)} &\leq \int_{\Omega} \mathrm{d}x \int_{0}^{1} |f_{s}(x,u(x)+\xi v(x)) - f_{s}(x,u(x))| \, \mathrm{d}\xi\\
+      &\xlongequal{\text{Fubini}} \int_{0}^{1} \Vert f_{s}(x,u(x)+\xi v(x)) - f_{s}(x,u(x)) \Vert_{L^{r}(\Omega)}^{r}\, \mathrm{d}\xi.
+    \end{aligned}
+  \end{equation*}
+  由于 $f_{s}: L^{p}(\Omega) \to L^{r}(\Omega)$ 是连续的, 故当 $v \to 0$ 在 $L^{p}(\Omega)$ 中时, 有
+  \begin{equation*}
+    \Vert w \Vert_{L^{r}(\Omega)} \to 0.
+  \end{equation*}
+  从而 $\omega(u,v) \to 0$ 当 $v \to 0$ 在 $L^{p}(\Omega)$ 中时, 这就证明了 $f$ 在 $u$ 处的 \Frechet 可微性.
+\end{proof}
+\end{document}
