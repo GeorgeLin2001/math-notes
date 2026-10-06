@@ -14,5 +14,5 @@
 # macOS
 .DS_Store
 
-# latexmk 构建目录（CI 使用）
+# latexmk 构建目录（build.sh 使用）
 build/
