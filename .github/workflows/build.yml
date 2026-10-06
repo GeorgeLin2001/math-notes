@@ -12,57 +12,70 @@ permissions:
 
 jobs:
   build:
-    # 用 macos-14 而非 macos-latest：latest 为 arm64，容量紧张时排队很久
     runs-on: macos-14
 
-    # 关键修复：GitHub Actions 的步骤脚本是非登录 shell，
-    # /Library/TeX/texbin 不会自动进入 PATH，必须显式加上，否则 latexmk 报 exit 127。
-    env:
-      PATH: /Library/TeX/texbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
-
     steps:
+      # 注意：不要在这里写死 PATH。
+      # 之前写死 /Library/TeX/texbin 导致「找不到 latexmk → TinyTeX 兜底 → 本地 PATH 没同步」
+      # 的连锁问题。改为在下面按实际探测结果动态注入。
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Preflight - verify LaTeX toolchain
+      - name: Locate or install LaTeX toolchain
         run: |
-          set -o pipefail
-          echo "== 查找 LateX 工具 =="
-          for tool in latexmk xelatex kpsewhich; do
-            if command -v "$tool" >/dev/null 2>&1; then
-              echo "  ✓ $tool → $(command -v "$tool")"
-            else
-              echo "  ✗ $tool 未找到"
+          set -x
+          echo "== 探测预装 MacTeX =="
+          TEXBIN=""
+          for d in /Library/TeX/texbin /usr/local/texlive/*/bin/universal-darwin; do
+            if [ -x "$d/latexmk" ]; then
+              echo "  找到 latexmk: $d"
+              TEXBIN="$d"; break
             fi
           done
+          echo "TEXBIN='${TEXBIN}'"
 
-          if ! command -v latexmk >/dev/null 2>&1; then
-            echo ""
-            echo "runner 上未预装 MacTeX，降级安装 TinyTeX …"
+          if [ -z "$TEXBIN" ]; then
+            echo "== runner 未预装可用 MacTeX，改用 TinyTeX =="
             curl -sL "https://yihui.org/tinytex/install-bin-unix.sh" | sh
-            echo "$HOME/.TinyTeX/bin/universal-darwin" >> "$GITHUB_PATH"
-            export PATH="$HOME/.TinyTeX/bin/universal-darwin:$PATH"
-            # 按 note.tex 实际用到的宏包逐一安装（TinyTeX 是精简版，不预装这些）
+            TEXBIN="$HOME/.TinyTeX/bin/universal-darwin"
+            echo "  安装后 TEXBIN=$TEXBIN"
+            ls -la "$TEXBIN" | head -5 || true
+
+            # 当前步骤内必须显式 export；$GITHUB_PATH 只对后续步骤生效
+            export PATH="$TEXBIN:$PATH"
+            echo "== 安装宏包（注意 latexmk 必须显式安装，TinyTeX 默认不含）=="
             tlmgr install \
+              latexmk \
               ctex xecjk fandol zhnumber \
               amsmath amssymb amsthm mathrsfs mathtools \
-              geometry \
-              tikz-cd pgf \
-              hyperref \
-              extarrows \
-              bbm \
-              esint
+              geometry tikz-cd pgf hyperref extarrows bbm esint
           fi
 
-          echo ""
-          echo "== 版本信息 =="
+          # 把探测/安装结果注入后续所有步骤
+          echo "$TEXBIN" >> "$GITHUB_PATH"
+
+      - name: Verify toolchain and packages
+        run: |
+          set -o pipefail
+          echo "PATH=$PATH"
+          echo "== 工具定位 =="
+          fail=0
+          for t in latexmk xelatex kpsewhich tlmgr; do
+            if command -v "$t" >/dev/null 2>&1; then
+              echo "  ✓ $t → $(command -v "$t")"
+            else
+              echo "  ✗ $t 未找到"
+              fail=1
+            fi
+          done
+          [ "$fail" -eq 0 ] || { echo "::error title=LaTeX 工具缺失::见上方 ✗ 行"; exit 1; }
+
+          echo "== 版本 =="
           latexmk --version | head -2
           xelatex --version | head -1
-
-      - name: Toolchain info
-        run: |
-          echo "== TeX Live =="
+          echo "== TeX Live 位置 =="
           kpsewhich --var-value=SELFAUTOPARENT || true
+
           echo "== 宏包探测 =="
           for p in ctexart.cls esint.sty extarrows.sty bbm.sty tikz-cd.sty mathtools.sty; do
             printf '  %-16s ' "$p"
@@ -79,7 +92,7 @@ jobs:
           echo "latexmk 退出码: ${PIPESTATUS[0]}"
 
           if [ -f build/note.pdf ]; then
-            echo "✓ 已生成 build/note.pdf"
+            echo "✓ 已生成 build/note.pdf ($(wc -c < build/note.pdf) bytes)"
             exit 0
           fi
 
@@ -107,6 +120,12 @@ jobs:
             build/compile-output.txt
           if-no-files-found: warn
           retention-days: 7
+
+      - name: Show package list on failure
+        if: failure()
+        run: |
+          echo "== 已安装宏包（可能因 mac 上 tlmgr 输出较长而截断）=="
+          tlmgr list --only-installed 2>/dev/null | head -60 || echo "(tlmgr 不可用)"
 
       - name: Move PDF to repository root
         run: cp build/note.pdf note.pdf
